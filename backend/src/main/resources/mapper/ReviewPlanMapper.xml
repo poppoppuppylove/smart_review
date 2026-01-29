@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.review.mapper.ReviewPlanMapper">
+    
+    <resultMap id="ReviewPlanResultMap" type="com.review.entity.ReviewPlan">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="questionId" column="question_id"/>
+        <result property="lastReviewTime" column="last_review_time"/>
+        <result property="nextReviewTime" column="next_review_time"/>
+        <result property="reviewLevel" column="review_level"/>
+        <result property="masteryScore" column="mastery_score"/>
+        <result property="priority" column="priority"/>
+        <result property="isCompleted" column="is_completed"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+    
+    <!-- 插入或更新复习计划 -->
+    <insert id="insertOrUpdate" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO review_plan (user_id, question_id, last_review_time, next_review_time, 
+                                review_level, mastery_score, priority, is_completed)
+        VALUES (#{userId}, #{questionId}, #{lastReviewTime}, #{nextReviewTime}, 
+                #{reviewLevel}, #{masteryScore}, #{priority}, #{isCompleted})
+        ON DUPLICATE KEY UPDATE
+            last_review_time = #{lastReviewTime},
+            next_review_time = #{nextReviewTime},
+            review_level = #{reviewLevel},
+            mastery_score = #{masteryScore},
+            priority = #{priority},
+            is_completed = #{isCompleted}
+    </insert>
+    
+    <!-- 查询用户的待复习题目 -->
+    <select id="findPendingReviews" resultMap="ReviewPlanResultMap">
+        SELECT * FROM review_plan 
+        WHERE user_id = #{userId} 
+          AND is_completed = 0 
+          AND next_review_time &lt;= #{currentTime}
+        ORDER BY priority DESC, next_review_time ASC
+    </select>
+    
+    <!-- 查询用户的所有复习计划 -->
+    <select id="findByUserId" resultMap="ReviewPlanResultMap">
+        SELECT * FROM review_plan WHERE user_id = #{userId} ORDER BY next_review_time ASC
+    </select>
+
+    <!-- 根据ID查询复习计划 -->
+    <select id="findById" resultMap="ReviewPlanResultMap">
+        SELECT * FROM review_plan WHERE id = #{id}
+    </select>
+
+    <!-- 根据用户和题目查询复习计划 -->
+    <select id="findByUserAndQuestion" resultMap="ReviewPlanResultMap">
+        SELECT * FROM review_plan WHERE user_id = #{userId} AND question_id = #{questionId}
+    </select>
+    
+    <!-- 更新复习计划 -->
+    <update id="update">
+        UPDATE review_plan SET
+            last_review_time = #{lastReviewTime},
+            next_review_time = #{nextReviewTime},
+            review_level = #{reviewLevel},
+            mastery_score = #{masteryScore},
+            priority = #{priority},
+            is_completed = #{isCompleted}
+        WHERE id = #{id}
+    </update>
+    
+    <!-- 插入复习计划 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO review_plan (user_id, question_id, last_review_time, next_review_time,
+                                review_level, mastery_score, priority, is_completed, created_at, updated_at)
+        VALUES (#{userId}, #{questionId}, #{lastReviewTime}, #{nextReviewTime},
+                #{reviewLevel}, #{masteryScore}, #{priority}, #{isCompleted}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <!-- 删除复习计划 -->
+    <delete id="delete">
+        DELETE FROM review_plan WHERE id = #{id}
+    </delete>
+
+    <!-- 删除复习计划 -->
+    <delete id="deleteById">
+        DELETE FROM review_plan WHERE id = #{id}
+    </delete>
+</mapper>

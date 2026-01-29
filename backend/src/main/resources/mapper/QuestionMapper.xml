@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.review.mapper.QuestionMapper">
+    
+    <resultMap id="QuestionResultMap" type="com.review.entity.Question">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="knowledgePointId" column="knowledge_point_id"/>
+        <result property="type" column="type"/>
+        <result property="title" column="title"/>
+        <result property="options" column="options"/>
+        <result property="correctAnswer" column="correct_answer"/>
+        <result property="analysis" column="analysis"/>
+        <result property="difficulty" column="difficulty"/>
+        <result property="tags" column="tags"/>
+        <result property="source" column="source"/>
+        <result property="subject" column="subject"/>
+        <result property="knowledgePointName" column="knowledge_point_name"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+    
+    <!-- 批量插入题目 -->
+    <insert id="batchInsert" parameterType="java.util.List" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO question (user_id, knowledge_point_id, type, title, options, correct_answer,
+                             analysis, difficulty, tags, source, subject)
+        VALUES
+        <foreach collection="questions" item="item" separator=",">
+            (#{item.userId}, #{item.knowledgePointId}, #{item.type}, #{item.title},
+             #{item.options}, #{item.correctAnswer}, #{item.analysis}, #{item.difficulty},
+             #{item.tags}, #{item.source}, #{item.subject})
+        </foreach>
+    </insert>
+    
+    <!-- 根据用户ID查询所有题目 -->
+    <select id="findByUserId" resultMap="QuestionResultMap">
+        SELECT
+            q.*,
+            kp.subject as subject,
+            kp.name as knowledge_point_name
+        FROM question q
+        LEFT JOIN knowledge_point kp ON q.knowledge_point_id = kp.id
+        WHERE q.user_id = #{userId}
+        ORDER BY q.created_at DESC
+    </select>
+    
+    <!-- 根据ID查询题目 -->
+    <select id="findById" resultMap="QuestionResultMap">
+        SELECT
+            q.*,
+            kp.subject as subject,
+            kp.name as knowledge_point_name
+        FROM question q
+        LEFT JOIN knowledge_point kp ON q.knowledge_point_id = kp.id
+        WHERE q.id = #{id}
+    </select>
+    
+    <!-- 根据知识点ID查询题目 -->
+    <select id="findByKnowledgePointId" resultMap="QuestionResultMap">
+        SELECT * FROM question WHERE knowledge_point_id = #{knowledgePointId} ORDER BY created_at DESC
+    </select>
+    
+    <!-- 根据难度查询题目 -->
+    <select id="findByDifficulty" resultMap="QuestionResultMap">
+        SELECT * FROM question WHERE user_id = #{userId} AND difficulty = #{difficulty} 
+        ORDER BY created_at DESC
+    </select>
+    
+    <!-- 更新题目 -->
+    <update id="update">
+        UPDATE question SET
+            knowledge_point_id = #{knowledgePointId},
+            type = #{type},
+            title = #{title},
+            options = #{options},
+            correct_answer = #{correctAnswer},
+            analysis = #{analysis},
+            difficulty = #{difficulty},
+            tags = #{tags},
+            source = #{source},
+            subject = #{subject}
+        WHERE id = #{id}
+    </update>
+    
+    <!-- 删除题目 -->
+    <delete id="deleteById">
+        DELETE FROM question WHERE id = #{id}
+    </delete>
+
+    <!-- 查询最近插入的N道题目 -->
+    <select id="findLatestQuestions" resultMap="QuestionResultMap">
+        SELECT * FROM question
+        WHERE user_id = #{userId}
+        <if test="knowledgePointId != null">
+            AND knowledge_point_id = #{knowledgePointId}
+        </if>
+        ORDER BY id DESC
+        LIMIT #{limit}
+    </select>
+</mapper>

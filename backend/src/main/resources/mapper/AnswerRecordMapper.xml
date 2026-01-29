@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.review.mapper.AnswerRecordMapper">
+    
+    <resultMap id="AnswerRecordResultMap" type="com.review.entity.AnswerRecord">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="questionId" column="question_id"/>
+        <result property="userAnswer" column="user_answer"/>
+        <result property="isCorrect" column="is_correct"/>
+        <result property="timeSpent" column="time_spent"/>
+        <result property="answerTime" column="answer_time"/>
+        <result property="reviewCount" column="review_count"/>
+        <result property="consecutiveCorrect" column="consecutive_correct"/>
+        <result property="retryCount" column="retry_count"/>
+        <result property="notes" column="notes"/>
+        <result property="isInWrongbook" column="is_in_wrongbook"/>
+        <result property="subject" column="subject"/>
+        <result property="topicName" column="topic_name"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <!-- 答题历史记录（包含题目信息） -->
+    <resultMap id="AnswerRecordWithQuestionResultMap" type="java.util.Map">
+        <result property="id" column="id"/>
+        <result property="user_id" column="user_id"/>
+        <result property="question_id" column="question_id"/>
+        <result property="user_answer" column="user_answer"/>
+        <result property="is_correct" column="is_correct"/>
+        <result property="time_spent" column="time_spent"/>
+        <result property="answer_time" column="answer_time"/>
+        <result property="review_count" column="review_count"/>
+        <result property="consecutive_correct" column="consecutive_correct"/>
+        <result property="retry_count" column="retry_count"/>
+        <result property="notes" column="notes"/>
+        <result property="is_in_wrongbook" column="is_in_wrongbook"/>
+        <result property="correct_answer" column="correct_answer"/>
+        <result property="analysis" column="analysis"/>
+        <result property="question_title" column="question_title"/>
+        <result property="subject" column="subject"/>
+        <result property="topic_name" column="topic_name"/>
+    </resultMap>
+    
+    <!-- 插入答题记录 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO answer_record (user_id, question_id, user_answer, is_correct, time_spent,
+                                   answer_time, review_count, consecutive_correct, retry_count, notes, is_in_wrongbook,
+                                   subject, topic_name)
+        VALUES (#{userId}, #{questionId}, #{userAnswer}, #{isCorrect}, #{timeSpent},
+                #{answerTime}, #{reviewCount}, #{consecutiveCorrect}, #{retryCount}, #{notes}, #{isInWrongbook},
+                #{subject}, #{topicName})
+    </insert>
+    
+    <!-- 查询用户的所有答题记录 -->
+    <select id="findByUserId" resultMap="AnswerRecordResultMap">
+        SELECT * FROM answer_record WHERE user_id = #{userId} ORDER BY answer_time DESC
+    </select>
+
+    <!-- 更新笔记 -->
+    <update id="updateNotes">
+        UPDATE answer_record SET notes = #{notes} WHERE id = #{id}
+    </update>
+
+    <!-- 更新是否在错题本中 -->
+    <update id="updateIsInWrongbook">
+        UPDATE answer_record SET is_in_wrongbook = #{isInWrongbook} WHERE id = #{id}
+    </update>
+    
+    <!-- 查询用户的错题记录（去重，每道题只显示最新的错误记录） -->
+    <select id="findWrongAnswersDeduplicated" resultMap="AnswerRecordResultMap">
+        SELECT ar.* FROM answer_record ar
+        INNER JOIN (
+            SELECT question_id, MAX(answer_time) as latest_time
+            FROM answer_record
+            WHERE user_id = #{userId} AND is_correct = 0 AND is_in_wrongbook = 1
+            GROUP BY question_id
+        ) latest ON ar.question_id = latest.question_id AND ar.answer_time = latest.latest_time
+        WHERE ar.user_id = #{userId} AND is_in_wrongbook = 1
+        ORDER BY ar.answer_time DESC
+    </select>
+
+    <!-- 查询用户的错题记录 -->
+    <select id="findWrongAnswers" resultMap="AnswerRecordResultMap">
+        SELECT * FROM answer_record WHERE user_id = #{userId} AND is_correct = 0
+        ORDER BY answer_time DESC
+    </select>
+    
+    <!-- 查询用户某题的最新答题记录 -->
+    <select id="findLatestByUserAndQuestion" resultMap="AnswerRecordResultMap">
+        SELECT * FROM answer_record 
+        WHERE user_id = #{userId} AND question_id = #{questionId} 
+        ORDER BY answer_time DESC LIMIT 1
+    </select>
+    
+    <!-- 查询用户某题的所有答题记录 -->
+    <select id="findByUserAndQuestion" resultMap="AnswerRecordResultMap">
+        SELECT * FROM answer_record 
+        WHERE user_id = #{userId} AND question_id = #{questionId} 
+        ORDER BY answer_time DESC
+    </select>
+    
+    <!-- 统计用户答题数 -->
+    <select id="countByUserId" resultType="int">
+        SELECT COUNT(*) FROM answer_record WHERE user_id = #{userId}
+    </select>
+    
+    <!-- 统计用户正确答题数 -->
+    <select id="countCorrectByUserId" resultType="int">
+        SELECT COUNT(*) FROM answer_record WHERE user_id = #{userId} AND is_correct = 1
+    </select>
+
+    <!-- 查询用户的所有答题记录（按答题时间倒序,包含题目信息） -->
+    <select id="findByUserIdOrderByAnswerTimeDescWithQuestion" resultMap="AnswerRecordWithQuestionResultMap">
+        SELECT
+            ar.*,
+            q.correct_answer,
+            q.analysis,
+            q.title as question_title,
+            ar.subject as subject,
+            ar.topic_name as topic_name
+        FROM answer_record ar
+        LEFT JOIN question q ON ar.question_id = q.id
+        WHERE ar.user_id = #{userId}
+        ORDER BY ar.answer_time DESC
+    </select>
+
+    <!-- 查询用户的所有答题记录（按答题时间倒序） -->
+    <select id="findByUserIdOrderByAnswerTimeDesc" resultMap="AnswerRecordResultMap">
+        SELECT * FROM answer_record WHERE user_id = #{userId} ORDER BY answer_time DESC
+    </select>
+</mapper>

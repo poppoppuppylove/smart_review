@@ -1,0 +1,35 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: smart-review-system
+  
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/new_smart_review?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: eee
+  
+  jackson:
+    time-zone: GMT+8
+    date-format: yyyy-MM-dd HH:mm:ss
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.review.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# 遗忘曲线配置参数
+review:
+  ebbinghaus:
+    # 复习间隔(天): 1, 2, 4, 7, 15
+    intervals: 1,2,4,7,15
+    # 正确率权重
+    accuracy-weight: 0.6
+    # 耗时权重
+    time-weight: 0.4
+    # 标准答题时间(秒)
+    standard-time: 60

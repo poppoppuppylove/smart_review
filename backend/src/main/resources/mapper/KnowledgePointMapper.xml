@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.review.mapper.KnowledgePointMapper">
+    
+    <resultMap id="KnowledgePointResultMap" type="com.review.entity.KnowledgePoint">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="name" column="name"/>
+        <result property="description" column="description"/>
+        <result property="parentId" column="parent_id"/>
+        <result property="level" column="level"/>
+        <result property="subject" column="subject"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+    
+    <!-- 插入知识点 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO knowledge_point (user_id, name, description, parent_id, level, subject)
+        VALUES (#{userId}, #{name}, #{description}, #{parentId}, #{level}, #{subject})
+    </insert>
+    
+    <!-- 批量插入知识点 -->
+    <insert id="batchInsert" parameterType="java.util.List" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO knowledge_point (user_id, name, description, parent_id, level, subject)
+        VALUES
+        <foreach collection="knowledgePoints" item="item" separator=",">
+            (#{item.userId}, #{item.name}, #{item.description}, #{item.parentId}, #{item.level}, #{item.subject})
+        </foreach>
+    </insert>
+    
+    <!-- 查询用户的所有知识点 -->
+    <select id="findByUserId" resultMap="KnowledgePointResultMap">
+        SELECT * FROM knowledge_point WHERE user_id = #{userId} ORDER BY level, created_at
+    </select>
+    
+    <!-- 根据ID查询知识点 -->
+    <select id="findById" resultMap="KnowledgePointResultMap">
+        SELECT * FROM knowledge_point WHERE id = #{id}
+    </select>
+    
+    <!-- 根据名称查询知识点 -->
+    <select id="findByName" resultMap="KnowledgePointResultMap">
+        SELECT * FROM knowledge_point WHERE user_id = #{userId} AND name = #{name} LIMIT 1
+    </select>
+    
+    <!-- 更新知识点 -->
+    <update id="update">
+        UPDATE knowledge_point SET
+            name = #{name},
+            description = #{description},
+            parent_id = #{parentId},
+            level = #{level},
+            subject = #{subject}
+        WHERE id = #{id}
+    </update>
+    
+    <!-- 删除知识点 -->
+    <delete id="deleteById">
+        DELETE FROM knowledge_point WHERE id = #{id}
+    </delete>
+</mapper>
